@@ -12,10 +12,15 @@ public class CardManager : MonoBehaviour
     [SerializeField] Vector3 cardSize;
     [SerializeField] Vector2 cardPadding;
 
+    [SerializeField] float growSpeed;
+
     [SerializeField] List<Card> cards;
     [SerializeField] GameObject cardPrefab;
+    
+    [SerializeField] Transform cardSpawnPoint;
+    [SerializeField] float cardSpeed;
 
-    List<GameObject> ActiveCards = new List<GameObject>();
+    List<Card> ActiveCards = new List<Card>();
 
     [SerializeField] Camera mainCamera;
 
@@ -42,8 +47,8 @@ public class CardManager : MonoBehaviour
 
             int index = UnityEngine.Random.Range(0, cardsCopy.Count);
             
-            deck.Insert(UnityEngine.Random.Range(0, deck.Count), cardsCopy[index]);
-            deck.Insert(UnityEngine.Random.Range(0, deck.Count), cardsCopy[index]);
+            deck.Insert(UnityEngine.Random.Range(0, deck.Count), Instantiate(cardsCopy[index]));
+            deck.Insert(UnityEngine.Random.Range(0, deck.Count), Instantiate(cardsCopy[index]));
 
             cardsCopy.RemoveAt(index);
         }
@@ -61,14 +66,22 @@ public class CardManager : MonoBehaviour
             float xpos = (-gridSize.x/2 * cardPadding.x) + (gridX + 0.5f) * cardPadding.x;
             float ypos = (gridSize.y * cardPadding.y)/2 + (gridY - 0.5f) * cardPadding.y;
             
-            GameObject cardObject = Instantiate(cardPrefab, new Vector3(xpos, ypos, 0), Quaternion.identity);
+            GameObject cardObject = Instantiate(cardPrefab, cardSpawnPoint.position, Quaternion.identity);
+            card.targetPosition = new Vector3(xpos, ypos, 0);
+            /*
+            card.targetPosition
+            cardSpawnPoint
+            xdif = Mathf.Abs(card.targetPosition.x - cardSpawnPoint.x)
+            ydif = Mathf.Abs(card.targetPosition.y - cardSpawnPoint.y)
+            Mathf.Sqrt(Mathf.Pow(xdif, 2f) + Mathf.Pow(ydif, 2f))
+            */
+            card.moveSpeed = Vector3.Distance(card.targetPosition, cardSpawnPoint.position) * cardSpeed;
 
             cardObject.GetComponent<CardPrefab>().card = card;
-            cardObject.GetComponent<Transform>().localScale = cardSize;
-            cardObject.transform.Find("CardImage").GetComponent<SpriteRenderer>().sprite = card.itemSprite;
-            print(card.itemSprite);
 
-            ActiveCards.Add(cardObject);
+            card.SetUp(cardObject, cardSize, growSpeed);
+
+            ActiveCards.Add(card);
 
             gridX += 1;
 
@@ -83,6 +96,8 @@ public class CardManager : MonoBehaviour
 
     void Update()
     {
-        
+        foreach (Card card in ActiveCards){
+            card.cardUpdate(mainCamera.ScreenToWorldPoint(Input.mousePosition), Input.GetKeyDown(KeyCode.Mouse0));
+        }
     }
 }

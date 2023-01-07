@@ -236,16 +236,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4a86704216d9242eba7d5c0f67e33b55, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  defaultImage: {fileID: 0}
+  defaultImage: {fileID: 21300000, guid: 17fa84703485d314b8d6b5216987d4b1, type: 3}
   gridSize: {x: 6, y: 3}
   cardSize: {x: 0.25, y: 0.25, z: 0}
   cardPadding: {x: 2.5, y: 3}
+  growSpeed: 0.75
   cards:
   - {fileID: 11400000, guid: b721e1546a16e42158110df300f94211, type: 2}
   - {fileID: 11400000, guid: 8ef3fd3cd67334ee4a0677b0ea8d3f82, type: 2}
   - {fileID: 11400000, guid: 8f04b4f2035ed49a68da65876ea131ae, type: 2}
   - {fileID: 11400000, guid: de3514f5469dc4ead87c7acfd2adec04, type: 2}
   - {fileID: 11400000, guid: 857a9356be41d4ce0999a091223f3404, type: 2}
+  - {fileID: 11400000, guid: 8b853bf45b90044599f2f85dd40551fd, type: 2}
   cardPrefab: {fileID: 1301249551436820665, guid: 78895cd4be4a04bbbaab57e51824e2cd, type: 3}
   mainCamera: {fileID: 0}
 --- !u!4 &1474782120
