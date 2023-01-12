@@ -22,13 +22,15 @@ public class Card : ScriptableObject
     SpriteRenderer bgRenderer;
     SpriteRenderer itemRenderer;
 
-    Transform cardTransform;
+    public Transform cardTransform;
     BoxCollider2D cardHitbox;
 
     // swap animation
     string scaleAnimation;
     Sprite swapSprite;
     float swapSpeed;
+
+    public bool flipped;
 
     public void SetUp(GameObject cardObject_, Vector3 cardSize_, float swapSpeed_){
         // basic setup
@@ -52,8 +54,8 @@ public class Card : ScriptableObject
     }
 
     public void cardUpdate(Vector2 mousePos, bool mouseClick){
-        if (cardHitbox.OverlapPoint(mousePos) && mouseClick){
-            swapFace();
+        if (cardHitbox.OverlapPoint(mousePos) && mouseClick && scaleAnimation == null){
+            showItem();
         }
 
         // animation
@@ -61,8 +63,7 @@ public class Card : ScriptableObject
         {
             cardTransform.localScale -= new Vector3(1, 0, 0) * Time.deltaTime * swapSpeed;
 
-            if (cardTransform.localScale.x < 0)
-            {
+            if (cardTransform.localScale.x < 0){
                 cardTransform.localScale = new Vector3(0, cardSize.y, cardSize.z);
 
                 itemRenderer.sprite = swapSprite;
@@ -71,34 +72,53 @@ public class Card : ScriptableObject
                 scaleAnimation = "grow";
             }
         }
-
-        else if (scaleAnimation == "grow")
+        if (scaleAnimation == "die")
         {
+            cardTransform.localScale -= new Vector3(1, 1, 0) * Time.deltaTime * swapSpeed;
+
+            if (cardTransform.localScale.x < 0)
+            {   
+                cardManager.deleteCard(this);
+                Destroy(cardObject);
+                Destroy(this);
+            }
+        }
+        if (scaleAnimation == "grow"){
             cardTransform.localScale += new Vector3(1, 0, 0) * Time.deltaTime * swapSpeed;
 
             if (cardTransform.localScale.x > cardSize.x)
             {
-                cardTransform.localScale = cardSize;
                 scaleAnimation = null;
+                cardTransform.localScale = cardSize;
             }
         }
 
         if (cardTransform.position != targetPosition){
-            cardTransform.position = Vector3.MoveTowards(cardTransform.position, targetPosition, moveSpeed);
+            Vector2 moveVec = Vector2.MoveTowards((Vector2)cardTransform.position, (Vector2)targetPosition, moveSpeed);
+            cardTransform.position = new Vector3(moveVec.x, moveVec.y, cardTransform.position.z);
         }
     }
 
-    public void swapFace()
-    {
-        if (itemRenderer.sprite == defaultSprite)
-        {
+    public void showItem(){
+        if (!flipped){
+            flipped = true;
+
             scaleAnimation = "shrink";
             swapSprite = itemSprite;
+            
+            cardManager.cardShown(this);
         }
-        else if (itemRenderer.sprite == itemSprite)
-        {
+    }
+    public void hideItem(){
+        if (flipped){
+            flipped = false;
+
             scaleAnimation = "shrink";
             swapSprite = defaultSprite;
         }
+    }
+    
+    public void cardDie(){
+        scaleAnimation = "die";
     }
 }

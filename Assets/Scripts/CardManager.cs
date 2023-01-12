@@ -20,7 +20,11 @@ public class CardManager : MonoBehaviour
     [SerializeField] Transform cardSpawnPoint;
     [SerializeField] float cardSpeed;
 
-    List<Card> ActiveCards = new List<Card>();
+    List<Card> activeCards = new List<Card>();
+    List<Vector3> cardPositions = new List<Vector3>();
+    public List<Card> cardsToDelete = new List<Card>();
+
+    public List<Card> flippedCards = new List<Card>();
 
     [SerializeField] Camera mainCamera;
 
@@ -52,7 +56,6 @@ public class CardManager : MonoBehaviour
 
             cardsCopy.RemoveAt(index);
         }
-        print(deck.Count);
         return deck;
     }
 
@@ -61,29 +64,30 @@ public class CardManager : MonoBehaviour
         int gridX = 0;
         int gridY = 0;
 
+        int iter = 0;
+
         foreach (Card card in deck){
 
             float xpos = (-gridSize.x/2 * cardPadding.x) + (gridX + 0.5f) * cardPadding.x;
             float ypos = (gridSize.y * cardPadding.y)/2 + (gridY - 0.5f) * cardPadding.y;
-            
-            GameObject cardObject = Instantiate(cardPrefab, cardSpawnPoint.position, Quaternion.identity);
+
+            cardPositions.Add(new Vector3(xpos, ypos, 0));
+
+            Vector3 spawn = cardSpawnPoint.position;
+            spawn.z = iter;
+
+            GameObject cardObject = Instantiate(cardPrefab, spawn, Quaternion.identity);
             card.targetPosition = new Vector3(xpos, ypos, 0);
-            /*
-            card.targetPosition
-            cardSpawnPoint
-            xdif = Mathf.Abs(card.targetPosition.x - cardSpawnPoint.x)
-            ydif = Mathf.Abs(card.targetPosition.y - cardSpawnPoint.y)
-            Mathf.Sqrt(Mathf.Pow(xdif, 2f) + Mathf.Pow(ydif, 2f))
-            */
-            card.moveSpeed = Vector3.Distance(card.targetPosition, cardSpawnPoint.position) * cardSpeed;
+            card.moveSpeed = Vector3.Distance(card.targetPosition, spawn) * cardSpeed;
 
             cardObject.GetComponent<CardPrefab>().card = card;
 
             card.SetUp(cardObject, cardSize, growSpeed);
 
-            ActiveCards.Add(card);
+            activeCards.Add(card);
 
             gridX += 1;
+            iter += 1;
 
             if (gridX == gridSize.x){
                 gridX = 0;
@@ -96,8 +100,63 @@ public class CardManager : MonoBehaviour
 
     void Update()
     {
-        foreach (Card card in ActiveCards){
+        foreach (Card card in cardsToDelete){
+            activeCards.Remove(card);
+        }
+        cardsToDelete = new List<Card>();
+
+        foreach (Card card in activeCards){
             card.cardUpdate(mainCamera.ScreenToWorldPoint(Input.mousePosition), Input.GetKeyDown(KeyCode.Mouse0));
+        }
+    }
+
+    public void cardShown(Card cardFlipped){
+        if (flippedCards.Count >= 2){
+            foreach (Card card in flippedCards){
+                card.hideItem();
+            }
+            flippedCards = new List<Card>();
+        }
+
+        flippedCards.Add(cardFlipped);
+        
+        if (flippedCards.Count >= 2){
+            if (flippedCards[0].itemName == flippedCards[1].itemName){
+                foreach (Card card in flippedCards){
+                    card.hideItem();
+                    card.cardDie();
+                }
+                flippedCards = new List<Card>();
+                if (activeCards.Count == 0){
+                    Debug.Log("you won");
+                }
+            }
+        }
+
+        if (flippedCards.Count == 2){
+        }
+    }
+    public void deleteCard(Card cardFlipped){
+        int indexOfCardFlipped = cardPositions.FindIndex(pos => pos == (Vector3)(Vector2)cardFlipped.targetPosition);
+
+        int currentIndex = 0;
+        int cardIndexInPos;
+
+        cardsToDelete.Add(cardFlipped);
+
+        foreach (Card card in activeCards){
+            
+            if (currentIndex > indexOfCardFlipped){
+                cardIndexInPos = cardPositions.FindIndex(pos => pos == card.targetPosition);
+
+                try{
+                    Vector2 newTarget = cardPositions[cardIndexInPos-1];
+                    card.moveSpeed = Vector3.Distance(newTarget, card.cardTransform.position) * cardSpeed;
+                    card.targetPosition = newTarget;
+                }
+                catch{}
+            }
+            currentIndex++;
         }
     }
 }
